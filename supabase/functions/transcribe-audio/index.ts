@@ -36,6 +36,7 @@ serve(async (req) => {
     const audioBlob = new Blob([bytes], { type: 'audio/webm' });
     formData.append('file', audioBlob, 'audio.webm');
     formData.append('model', 'whisper-1');
+    formData.append('prompt', 'Transcribe this audio.');
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/audio/transcriptions", {
       method: "POST",
