@@ -5,6 +5,7 @@ import { User } from "@supabase/supabase-js";
 import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { ChatMessages } from "@/components/chat/ChatMessages";
 import { ChatInput } from "@/components/chat/ChatInput";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { Menu, Squirrel } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -197,7 +198,7 @@ const Chat = () => {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="border-b border-border p-4 flex items-center gap-3 pl-16 md:pl-4">
+        <div className="border-b border-border p-4 flex items-center justify-between gap-3 pl-16 md:pl-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-soft">
               <Squirrel className="w-5 h-5 text-primary-foreground" />
@@ -209,6 +210,7 @@ const Chat = () => {
               </p>
             </div>
           </div>
+          <ThemeToggle />
         </div>
 
         {/* Messages Area */}
