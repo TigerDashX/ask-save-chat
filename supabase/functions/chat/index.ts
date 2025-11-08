@@ -22,8 +22,13 @@ serve(async (req) => {
 
     // Detect if user is asking for image generation
     const lastUserMessage = messages.filter((m: any) => m.role === "user").pop()?.content || "";
+    const messageText = typeof lastUserMessage === "string" 
+      ? lastUserMessage 
+      : Array.isArray(lastUserMessage) 
+        ? lastUserMessage.find((item: any) => item.type === "text")?.text || ""
+        : "";
     const imageKeywords = ["génère", "génerer", "générer", "crée", "créer", "créé", "dessine", "dessiner", "image", "photo", "illustration"];
-    const isImageRequest = imageKeywords.some(keyword => lastUserMessage.toLowerCase().includes(keyword));
+    const isImageRequest = imageKeywords.some(keyword => messageText.toLowerCase().includes(keyword));
 
     // If image generation is requested, use the image model
     if (isImageRequest) {
