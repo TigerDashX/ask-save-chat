@@ -163,6 +163,15 @@ const Chat = () => {
 
       {/* Mobile Sidebar */}
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+        <SheetTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden absolute top-4 left-4 z-50"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
         <SheetContent side="left" className="p-0 w-64">
           <ChatSidebar
             conversations={conversations}
@@ -179,17 +188,7 @@ const Chat = () => {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="border-b border-border p-4 flex items-center gap-3">
-          <SheetTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setIsSidebarOpen(true)}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
+        <div className="border-b border-border p-4 flex items-center gap-3 pl-16 md:pl-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-soft">
               <MessageSquare className="w-5 h-5 text-primary-foreground" />
