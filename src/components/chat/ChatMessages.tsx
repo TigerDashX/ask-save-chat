@@ -42,16 +42,27 @@ export const ChatMessages = ({ messages, isStreaming }: ChatMessagesProps) => {
                   : "bg-card border border-border"
               )}
             >
-              <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+              {message.content && (
+                <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+              )}
               {message.images && message.images.length > 0 && (
                 <div className="mt-3 space-y-2">
                   {message.images.map((img, idx) => (
-                    <img
-                      key={idx}
-                      src={img.image_url.url}
-                      alt="Image générée par l'IA"
-                      className="rounded-lg max-w-full h-auto"
-                    />
+                    <div key={idx}>
+                      {img.image_url ? (
+                        <img
+                          src={img.image_url.url}
+                          alt="Image"
+                          className="rounded-lg max-w-full h-auto"
+                        />
+                      ) : img.video_url ? (
+                        <video
+                          src={img.video_url.url}
+                          controls
+                          className="rounded-lg max-w-full h-auto"
+                        />
+                      ) : null}
+                    </div>
                   ))}
                 </div>
               )}

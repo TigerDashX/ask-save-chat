@@ -88,7 +88,7 @@ serve(async (req) => {
         messages: [
           { 
             role: "system", 
-            content: "Tu es Vortex IA, un assistant intelligent et serviable. Réponds de manière claire et concise en français." 
+            content: "Tu es Vortex IA, un assistant intelligent et serviable. Réponds de manière claire et concise en français. Tu peux analyser des images et des vidéos." 
           },
           ...messages,
         ],

@@ -17,7 +17,10 @@ export interface Message {
   created_at: string;
   images?: Array<{
     type: string;
-    image_url: {
+    image_url?: {
+      url: string;
+    };
+    video_url?: {
       url: string;
     };
   }>;
