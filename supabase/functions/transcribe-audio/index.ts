@@ -24,26 +24,33 @@ serve(async (req) => {
 
     console.log("Transcribing audio...");
 
-    // Convert base64 to binary
-    const binaryString = atob(audio);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-
-    // Create form data for Whisper API
-    const formData = new FormData();
-    const audioBlob = new Blob([bytes], { type: 'audio/webm' });
-    formData.append('file', audioBlob, 'audio.webm');
-    formData.append('model', 'whisper-1');
-    formData.append('prompt', 'Transcribe this audio.');
-
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/audio/transcriptions", {
+    // Use Gemini to transcribe audio via chat completions
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
       },
-      body: formData,
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: "Transcris cet audio en texte. Réponds uniquement avec la transcription, sans commentaire."
+              },
+              {
+                type: "audio_url",
+                audio_url: {
+                  url: `data:audio/webm;base64,${audio}`
+                }
+              }
+            ]
+          }
+        ],
+      }),
     });
 
     if (!response.ok) {
@@ -67,10 +74,11 @@ serve(async (req) => {
     }
 
     const result = await response.json();
-    console.log("Transcription successful");
+    const transcription = result.choices?.[0]?.message?.content || "";
+    console.log("Transcription successful:", transcription);
 
     return new Response(
-      JSON.stringify({ text: result.text }),
+      JSON.stringify({ text: transcription }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
