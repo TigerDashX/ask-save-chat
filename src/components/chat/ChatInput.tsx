@@ -152,11 +152,76 @@ export const ChatInput = ({
       
       // Update conversation title if it's the first message
       if (messages.length === 0) {
-        const title = userMessage.slice(0, 50) + (userMessage.length > 50 ? "..." : "");
-        await supabase
-          .from("conversations")
-          .update({ title })
-          .eq("id", conversationId);
+        try {
+          const titleResponse = await fetch(CHAT_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({
+              messages: [
+                { role: "system", content: "Generate a short, concise title (max 40 characters) for this conversation based on the user's message. Only return the title, nothing else." },
+                { role: "user", content: userMessage }
+              ],
+            }),
+          });
+
+          if (titleResponse.ok) {
+            const titleReader = titleResponse.body?.getReader();
+            const titleDecoder = new TextDecoder();
+            let title = "";
+            let titleBuffer = "";
+
+            if (titleReader) {
+              while (true) {
+                const { done, value } = await titleReader.read();
+                if (done) break;
+
+                titleBuffer += titleDecoder.decode(value, { stream: true });
+
+                let newlineIndex: number;
+                while ((newlineIndex = titleBuffer.indexOf("\n")) !== -1) {
+                  let line = titleBuffer.slice(0, newlineIndex);
+                  titleBuffer = titleBuffer.slice(newlineIndex + 1);
+
+                  if (line.endsWith("\r")) line = line.slice(0, -1);
+                  if (line.startsWith(":") || line.trim() === "") continue;
+                  if (!line.startsWith("data: ")) continue;
+
+                  const jsonStr = line.slice(6).trim();
+                  if (jsonStr === "[DONE]") break;
+
+                  try {
+                    const parsed = JSON.parse(jsonStr);
+                    const content = parsed.choices?.[0]?.delta?.content;
+                    if (content) {
+                      title += content;
+                    }
+                  } catch (e) {
+                    titleBuffer = line + "\n" + titleBuffer;
+                    break;
+                  }
+                }
+              }
+
+              if (title.trim()) {
+                await supabase
+                  .from("conversations")
+                  .update({ title: title.trim().slice(0, 60) })
+                  .eq("id", conversationId);
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error generating title:", error);
+          // Fallback to simple title
+          const fallbackTitle = userMessage.slice(0, 50) + (userMessage.length > 50 ? "..." : "");
+          await supabase
+            .from("conversations")
+            .update({ title: fallbackTitle })
+            .eq("id", conversationId);
+        }
       }
     } catch (error) {
       console.error("Error:", error);
