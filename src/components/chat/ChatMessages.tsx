@@ -43,6 +43,18 @@ export const ChatMessages = ({ messages, isStreaming }: ChatMessagesProps) => {
               )}
             >
               <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+              {message.images && message.images.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {message.images.map((img, idx) => (
+                    <img
+                      key={idx}
+                      src={img.image_url.url}
+                      alt="Image générée par l'IA"
+                      className="rounded-lg max-w-full h-auto"
+                    />
+                  ))}
+                </div>
+              )}
             </div>
             {message.role === "user" && (
               <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">

@@ -15,6 +15,12 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   created_at: string;
+  images?: Array<{
+    type: string;
+    image_url: {
+      url: string;
+    };
+  }>;
 }
 
 export interface Conversation {

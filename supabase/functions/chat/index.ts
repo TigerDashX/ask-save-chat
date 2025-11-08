@@ -20,6 +20,63 @@ serve(async (req) => {
 
     console.log("Starting AI chat with", messages.length, "messages");
 
+    // Detect if user is asking for image generation
+    const lastUserMessage = messages.filter((m: any) => m.role === "user").pop()?.content || "";
+    const imageKeywords = ["génère", "génerer", "générer", "crée", "créer", "créé", "dessine", "dessiner", "image", "photo", "illustration"];
+    const isImageRequest = imageKeywords.some(keyword => lastUserMessage.toLowerCase().includes(keyword));
+
+    // If image generation is requested, use the image model
+    if (isImageRequest) {
+      const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-2.5-flash-image-preview",
+          messages: [
+            { 
+              role: "system", 
+              content: "Tu es Vortex IA, un assistant capable de générer des images. Quand l'utilisateur demande une image, génère-la selon sa description." 
+            },
+            ...messages,
+          ],
+          modalities: ["image", "text"],
+        }),
+      });
+
+      if (!imageResponse.ok) {
+        const errorText = await imageResponse.text();
+        console.error("Image generation error:", imageResponse.status, errorText);
+        
+        if (imageResponse.status === 429) {
+          return new Response(
+            JSON.stringify({ error: "Limite de requêtes dépassée, veuillez réessayer plus tard." }), 
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (imageResponse.status === 402) {
+          return new Response(
+            JSON.stringify({ error: "Crédits insuffisants, veuillez ajouter des crédits à votre espace de travail." }), 
+            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
+        return new Response(
+          JSON.stringify({ error: "Erreur lors de la génération de l'image" }), 
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const imageData = await imageResponse.json();
+      return new Response(
+        JSON.stringify(imageData),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Regular text chat with streaming
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {

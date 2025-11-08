@@ -78,77 +78,108 @@ export const ChatInput = ({
         return;
       }
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let assistantMessage = "";
-      let textBuffer = "";
+      // Check if response is JSON (image generation) or stream (text chat)
+      const contentType = response.headers.get("content-type");
+      
+      if (contentType?.includes("application/json")) {
+        // Image generation response
+        const data = await response.json();
+        const generatedImages = data.choices?.[0]?.message?.images;
+        const textContent = data.choices?.[0]?.message?.content || "Voici l'image générée :";
 
-      if (!reader) {
-        throw new Error("Impossible de lire la réponse");
-      }
+        // Save assistant message with images to DB
+        const { data: assistantMsgData, error: assistantMsgError } = await supabase
+          .from("messages")
+          .insert({
+            conversation_id: conversationId,
+            role: "assistant" as const,
+            content: textContent,
+            images: generatedImages || null,
+          })
+          .select()
+          .single();
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+        if (assistantMsgError) {
+          toast.error("Erreur lors de la sauvegarde de la réponse");
+          onStreamingChange(false);
+          return;
+        }
 
-        textBuffer += decoder.decode(value, { stream: true });
+        onMessagesUpdate([...messages, userMsgData as Message, assistantMsgData as Message]);
+      } else {
+        // Text streaming response
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
+        let assistantMessage = "";
+        let textBuffer = "";
 
-        let newlineIndex: number;
-        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
-          let line = textBuffer.slice(0, newlineIndex);
-          textBuffer = textBuffer.slice(newlineIndex + 1);
+        if (!reader) {
+          throw new Error("Impossible de lire la réponse");
+        }
 
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || line.trim() === "") continue;
-          if (!line.startsWith("data: ")) continue;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
 
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") break;
+          textBuffer += decoder.decode(value, { stream: true });
 
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              assistantMessage += content;
-              
-              // Update messages optimistically
-              onMessagesUpdate([
-                ...messages,
-                userMsgData as Message,
-                {
-                  id: "temp-" + Date.now(),
-                  role: "assistant" as const,
-                  content: assistantMessage,
-                  created_at: new Date().toISOString(),
-                } as Message,
-              ]);
+          let newlineIndex: number;
+          while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+            let line = textBuffer.slice(0, newlineIndex);
+            textBuffer = textBuffer.slice(newlineIndex + 1);
+
+            if (line.endsWith("\r")) line = line.slice(0, -1);
+            if (line.startsWith(":") || line.trim() === "") continue;
+            if (!line.startsWith("data: ")) continue;
+
+            const jsonStr = line.slice(6).trim();
+            if (jsonStr === "[DONE]") break;
+
+            try {
+              const parsed = JSON.parse(jsonStr);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                assistantMessage += content;
+                
+                // Update messages optimistically
+                onMessagesUpdate([
+                  ...messages,
+                  userMsgData as Message,
+                  {
+                    id: "temp-" + Date.now(),
+                    role: "assistant" as const,
+                    content: assistantMessage,
+                    created_at: new Date().toISOString(),
+                  } as Message,
+                ]);
+              }
+            } catch (e) {
+              // Partial JSON, wait for more data
+              textBuffer = line + "\n" + textBuffer;
+              break;
             }
-          } catch (e) {
-            // Partial JSON, wait for more data
-            textBuffer = line + "\n" + textBuffer;
-            break;
           }
         }
+
+        // Save assistant message to DB
+        const { data: assistantMsgData, error: assistantMsgError } = await supabase
+          .from("messages")
+          .insert({
+            conversation_id: conversationId,
+            role: "assistant" as const,
+            content: assistantMessage,
+          })
+          .select()
+          .single();
+
+        if (assistantMsgError) {
+          toast.error("Erreur lors de la sauvegarde de la réponse");
+          onStreamingChange(false);
+          return;
+        }
+
+        onMessagesUpdate([...messages, userMsgData as Message, assistantMsgData as Message]);
       }
-
-      // Save assistant message to DB
-      const { data: assistantMsgData, error: assistantMsgError } = await supabase
-        .from("messages")
-        .insert({
-          conversation_id: conversationId,
-          role: "assistant" as const,
-          content: assistantMessage,
-        })
-        .select()
-        .single();
-
-      if (assistantMsgError) {
-        toast.error("Erreur lors de la sauvegarde de la réponse");
-        onStreamingChange(false);
-        return;
-      }
-
-      onMessagesUpdate([...messages, userMsgData as Message, assistantMsgData as Message]);
       
       // Update conversation title if it's the first message
       if (messages.length === 0) {
