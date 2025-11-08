@@ -122,7 +122,6 @@ export const ChatInput = ({
         conversation_id: conversationId,
         role: "user" as const,
         content: userMessage || "Voici mes fichiers",
-        images: fileContents.length > 0 ? fileContents : null,
       })
       .select()
       .single();
@@ -192,7 +191,6 @@ export const ChatInput = ({
             conversation_id: conversationId,
             role: "assistant" as const,
             content: textContent,
-            images: generatedImages || null,
           })
           .select()
           .single();
