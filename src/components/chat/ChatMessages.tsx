@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Message } from "@/pages/Chat";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bot, User } from "lucide-react";
+import { Squirrel, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ChatMessagesProps {
@@ -30,8 +30,8 @@ export const ChatMessages = ({ messages, isStreaming }: ChatMessagesProps) => {
             )}
           >
             {message.role === "assistant" && (
-              <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center flex-shrink-0 shadow-soft">
-                <Bot className="w-5 h-5 text-primary-foreground" />
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0 shadow-soft">
+                <Squirrel className="w-5 h-5 text-primary-foreground" />
               </div>
             )}
             <div
@@ -65,8 +65,8 @@ export const ChatMessages = ({ messages, isStreaming }: ChatMessagesProps) => {
         ))}
         {isStreaming && (
           <div className="flex gap-3 animate-in fade-in-50">
-            <div className="w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center flex-shrink-0 shadow-soft">
-              <Bot className="w-5 h-5 text-primary-foreground" />
+            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0 shadow-soft">
+              <Squirrel className="w-5 h-5 text-primary-foreground" />
             </div>
             <div className="rounded-2xl px-4 py-3 bg-card border border-border shadow-sm">
               <div className="flex gap-1">

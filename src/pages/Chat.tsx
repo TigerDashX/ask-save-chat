@@ -6,7 +6,7 @@ import { ChatSidebar } from "@/components/chat/ChatSidebar";
 import { ChatMessages } from "@/components/chat/ChatMessages";
 import { ChatInput } from "@/components/chat/ChatInput";
 import { Button } from "@/components/ui/button";
-import { Menu, MessageSquare } from "lucide-react";
+import { Menu, Squirrel } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { toast } from "sonner";
 
@@ -145,7 +145,7 @@ const Chat = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <MessageSquare className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
+          <Squirrel className="w-12 h-12 text-primary mx-auto mb-4 animate-pulse" />
           <p className="text-muted-foreground">Chargement...</p>
         </div>
       </div>
@@ -196,8 +196,8 @@ const Chat = () => {
         {/* Header */}
         <div className="border-b border-border p-4 flex items-center gap-3 pl-16 md:pl-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-soft">
-              <MessageSquare className="w-5 h-5 text-primary-foreground" />
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-soft">
+              <Squirrel className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
               <h1 className="font-semibold">Vortex IA</h1>
@@ -215,8 +215,8 @@ const Chat = () => {
           ) : (
             <div className="h-full flex items-center justify-center">
               <div className="text-center max-w-md px-4">
-                <div className="w-20 h-20 bg-gradient-primary rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-soft">
-                  <MessageSquare className="w-10 h-10 text-primary-foreground" />
+                <div className="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-soft">
+                  <Squirrel className="w-10 h-10 text-primary-foreground" />
                 </div>
                 <h2 className="text-2xl font-bold mb-2">Bienvenue !</h2>
                 <p className="text-muted-foreground mb-6">
