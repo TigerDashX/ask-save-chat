@@ -119,13 +119,49 @@ export const VoiceCall = ({ onCallStateChange }: VoiceCallProps) => {
     if (!audioContextRef.current) return;
 
     try {
+      // Decode base64 to PCM16 data
       const binaryString = atob(base64Audio);
       const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i);
       }
 
-      const audioBuffer = await audioContextRef.current.decodeAudioData(bytes.buffer);
+      // Create WAV header for PCM16 24kHz mono
+      const wavHeader = new ArrayBuffer(44);
+      const view = new DataView(wavHeader);
+      
+      const writeString = (offset: number, string: string) => {
+        for (let i = 0; i < string.length; i++) {
+          view.setUint8(offset + i, string.charCodeAt(i));
+        }
+      };
+
+      const sampleRate = 24000;
+      const numChannels = 1;
+      const bitsPerSample = 16;
+      const byteRate = sampleRate * numChannels * (bitsPerSample / 8);
+      const blockAlign = numChannels * (bitsPerSample / 8);
+
+      writeString(0, 'RIFF');
+      view.setUint32(4, 36 + bytes.length, true);
+      writeString(8, 'WAVE');
+      writeString(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, byteRate, true);
+      view.setUint16(32, blockAlign, true);
+      view.setUint16(34, bitsPerSample, true);
+      writeString(36, 'data');
+      view.setUint32(40, bytes.length, true);
+
+      // Combine WAV header with PCM data
+      const wavArray = new Uint8Array(wavHeader.byteLength + bytes.length);
+      wavArray.set(new Uint8Array(wavHeader), 0);
+      wavArray.set(bytes, wavHeader.byteLength);
+
+      const audioBuffer = await audioContextRef.current.decodeAudioData(wavArray.buffer);
       const source = audioContextRef.current.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(audioContextRef.current.destination);
