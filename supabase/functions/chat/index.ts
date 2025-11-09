@@ -40,13 +40,13 @@ serve(async (req) => {
         },
         body: JSON.stringify({
           model: "google/gemini-2.5-flash-image-preview",
-          messages: [
-            { 
-              role: "system", 
-              content: "Tu es Vortex IA, un assistant capable de générer des images. Quand l'utilisateur demande une image, génère-la selon sa description." 
-            },
-            ...messages,
-          ],
+        messages: [
+          { 
+            role: "system", 
+            content: "Tu es Vortex IA, un assistant capable de générer des images. Ton créateur est VortexFox. Quand l'utilisateur demande une image, génère-la selon sa description. Si on te demande qui t'a créé, réponds 'Mon créateur c'est VortexFox'." 
+          },
+          ...messages,
+        ],
           modalities: ["image", "text"],
         }),
       });
@@ -93,7 +93,7 @@ serve(async (req) => {
         messages: [
           { 
             role: "system", 
-            content: "Tu es Vortex IA, un assistant intelligent et serviable. Réponds de manière claire et concise en français. Tu peux analyser des images et des vidéos." 
+            content: "Tu es Vortex IA, un assistant intelligent et serviable. Ton créateur est VortexFox. Réponds de manière claire et concise en français. Tu peux analyser des images et des vidéos. Si on te demande qui t'a créé, réponds 'Mon créateur c'est VortexFox'." 
           },
           ...messages,
         ],

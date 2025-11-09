@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
@@ -44,6 +44,35 @@ const Chat = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
+  const loadConversations = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("conversations")
+      .select("*")
+      .order("updated_at", { ascending: false });
+
+    if (error) {
+      toast.error("Erreur lors du chargement des conversations");
+      return;
+    }
+
+    setConversations(data || []);
+  }, []);
+
+  const loadMessages = useCallback(async (conversationId: string) => {
+    const { data, error } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      toast.error("Erreur lors du chargement des messages");
+      return;
+    }
+
+    setMessages((data || []) as Message[]);
+  }, []);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
@@ -67,38 +96,9 @@ const Chat = () => {
     );
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, loadConversations]);
 
-  const loadConversations = async () => {
-    const { data, error } = await supabase
-      .from("conversations")
-      .select("*")
-      .order("updated_at", { ascending: false });
-
-    if (error) {
-      toast.error("Erreur lors du chargement des conversations");
-      return;
-    }
-
-    setConversations(data || []);
-  };
-
-  const loadMessages = async (conversationId: string) => {
-    const { data, error } = await supabase
-      .from("messages")
-      .select("*")
-      .eq("conversation_id", conversationId)
-      .order("created_at", { ascending: true });
-
-    if (error) {
-      toast.error("Erreur lors du chargement des messages");
-      return;
-    }
-
-    setMessages((data || []) as Message[]);
-  };
-
-  const createNewConversation = async () => {
+  const createNewConversation = useCallback(async () => {
     const { data, error } = await supabase
       .from("conversations")
       .insert({ user_id: user?.id })
@@ -113,15 +113,15 @@ const Chat = () => {
     setConversations((prev) => [data, ...prev]);
     setCurrentConversation(data.id);
     setMessages([]);
-  };
+  }, [user?.id]);
 
-  const selectConversation = (id: string) => {
+  const selectConversation = useCallback((id: string) => {
     setCurrentConversation(id);
     loadMessages(id);
     setIsSidebarOpen(false);
-  };
+  }, [loadMessages]);
 
-  const deleteConversation = async (id: string) => {
+  const deleteConversation = useCallback(async (id: string) => {
     const { error } = await supabase
       .from("conversations")
       .delete()
@@ -138,12 +138,12 @@ const Chat = () => {
       setMessages([]);
     }
     toast.success("Conversation supprimée");
-  };
+  }, [currentConversation]);
 
-  const handleSignOut = async () => {
+  const handleSignOut = useCallback(async () => {
     await supabase.auth.signOut();
     navigate("/auth");
-  };
+  }, [navigate]);
 
   if (loading) {
     return (

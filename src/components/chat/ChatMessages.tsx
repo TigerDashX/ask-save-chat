@@ -10,11 +10,13 @@ interface ChatMessagesProps {
 }
 
 export const ChatMessages = ({ messages, isStreaming }: ChatMessagesProps) => {
-  const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Utilise requestAnimationFrame pour un scroll plus fluide
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    });
   }, [messages, isStreaming]);
 
   return (
