@@ -74,15 +74,28 @@ const Chat = () => {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const initAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
       if (session?.user) {
         setUser(session.user);
-        loadConversations();
+        
+        // Load conversations directly without dependency
+        const { data, error } = await supabase
+          .from("conversations")
+          .select("*")
+          .order("updated_at", { ascending: false });
+
+        if (!error && data) {
+          setConversations(data || []);
+        }
       } else {
         navigate("/auth");
       }
       setLoading(false);
-    });
+    };
+
+    initAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -96,7 +109,7 @@ const Chat = () => {
     );
 
     return () => subscription.unsubscribe();
-  }, [navigate, loadConversations]);
+  }, [navigate]);
 
   const createNewConversation = useCallback(async () => {
     const { data, error } = await supabase
