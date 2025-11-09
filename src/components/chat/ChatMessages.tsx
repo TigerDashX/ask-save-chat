@@ -11,15 +11,14 @@ interface ChatMessagesProps {
 
 export const ChatMessages = ({ messages, isStreaming }: ChatMessagesProps) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isStreaming]);
 
   return (
-    <ScrollArea className="h-full p-4" ref={scrollRef}>
+    <ScrollArea className="h-full p-4">
       <div className="max-w-3xl mx-auto space-y-6">
         {messages.map((message) => (
           <div
@@ -88,6 +87,7 @@ export const ChatMessages = ({ messages, isStreaming }: ChatMessagesProps) => {
             </div>
           </div>
         )}
+        <div ref={messagesEndRef} />
       </div>
     </ScrollArea>
   );

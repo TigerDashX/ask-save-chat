@@ -196,9 +196,9 @@ const Chat = () => {
       </Sheet>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <div className="border-b border-border p-4 flex items-center justify-between gap-3 pl-16 md:pl-4">
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header - Fixed */}
+        <div className="border-b border-border p-4 flex items-center justify-between gap-3 pl-16 md:pl-4 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-soft">
               <Squirrel className="w-5 h-5 text-primary-foreground" />
@@ -213,8 +213,8 @@ const Chat = () => {
           <ThemeToggle />
         </div>
 
-        {/* Messages Area */}
-        <div className="flex-1 overflow-hidden">
+        {/* Messages Area - Scrollable */}
+        <div className="flex-1 overflow-hidden min-h-0">
           {currentConversation ? (
             <ChatMessages messages={messages} isStreaming={isStreaming} />
           ) : (
@@ -235,15 +235,17 @@ const Chat = () => {
           )}
         </div>
 
-        {/* Input Area */}
+        {/* Input Area - Fixed */}
         {currentConversation && (
-          <ChatInput
-            conversationId={currentConversation}
-            messages={messages}
-            onMessagesUpdate={setMessages}
-            isStreaming={isStreaming}
-            onStreamingChange={setIsStreaming}
-          />
+          <div className="flex-shrink-0">
+            <ChatInput
+              conversationId={currentConversation}
+              messages={messages}
+              onMessagesUpdate={setMessages}
+              isStreaming={isStreaming}
+              onStreamingChange={setIsStreaming}
+            />
+          </div>
         )}
       </div>
     </div>
