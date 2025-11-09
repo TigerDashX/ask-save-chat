@@ -115,13 +115,14 @@ export const ChatInput = ({
       })
     );
 
-    // Add user message to DB
+    // Add user message to DB with images
     const { data: userMsgData, error: userMsgError } = await supabase
       .from("messages")
       .insert({
         conversation_id: conversationId,
         role: "user" as const,
         content: userMessage || "Voici mes fichiers",
+        images: fileContents.length > 0 ? fileContents : null,
       })
       .select()
       .single();

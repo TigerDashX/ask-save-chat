@@ -33,7 +33,7 @@ export const VoiceCall = ({ onCallStateChange }: VoiceCallProps) => {
       audioContextRef.current = new AudioContext({ sampleRate: 24000 });
 
       // Connect to voice call WebSocket
-      const wsUrl = `wss://qqyjmfygdjhoxeycywae.supabase.co/functions/v1/voice-call`;
+      const wsUrl = `wss://qqyjmfygdjhoxeycywae.functions.supabase.co/voice-call`;
       wsRef.current = new WebSocket(wsUrl);
 
       wsRef.current.onopen = () => {
