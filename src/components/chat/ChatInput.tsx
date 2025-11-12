@@ -1,12 +1,11 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Paperclip, Mic, MicOff } from "lucide-react";
+import { Send, Paperclip } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Message } from "@/pages/Chat";
-import { AudioRecorder, blobToBase64 } from "@/utils/audioRecorder";
-import { VoiceCall } from "./VoiceCall";
+import { blobToBase64 } from "@/utils/audioRecorder";
 
 interface ChatInputProps {
   conversationId: string;
@@ -25,10 +24,7 @@ export const ChatInput = ({
 }: ChatInputProps) => {
   const [input, setInput] = useState("");
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isInCall, setIsInCall] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const audioRecorderRef = useRef<AudioRecorder>(new AudioRecorder());
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -50,48 +46,6 @@ export const ChatInput = ({
 
   const removeFile = (index: number) => {
     setAttachedFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const toggleRecording = async () => {
-    if (isRecording) {
-      try {
-        const audioBlob = await audioRecorderRef.current.stop();
-        setIsRecording(false);
-        await sendVoiceMessage(audioBlob);
-      } catch (error) {
-        toast.error("Erreur lors de l'arrêt de l'enregistrement");
-      }
-    } else {
-      try {
-        await audioRecorderRef.current.start();
-        setIsRecording(true);
-        toast.success("Enregistrement en cours...");
-      } catch (error) {
-        toast.error("Impossible d'accéder au microphone");
-      }
-    }
-  };
-
-  const sendVoiceMessage = async (audioBlob: Blob) => {
-    try {
-      const base64Audio = await blobToBase64(audioBlob);
-      
-      // Transcribe audio
-      const { data, error } = await supabase.functions.invoke('transcribe-audio', {
-        body: { audio: base64Audio }
-      });
-
-      if (error) throw error;
-
-      const transcription = data.text;
-      if (transcription) {
-        setInput(transcription);
-        toast.success("Message vocal transcrit");
-      }
-    } catch (error) {
-      console.error('Error transcribing audio:', error);
-      toast.error("Erreur lors de la transcription");
-    }
   };
 
   const handleSend = async () => {
@@ -371,14 +325,14 @@ export const ChatInput = ({
   };
 
   return (
-    <div className="border-t border-border p-4 bg-card">
+    <div className="border-t border-border p-3 sm:p-4 bg-card">
       <div className="max-w-3xl mx-auto">
         {/* Attached files preview */}
         {attachedFiles.length > 0 && (
-          <div className="mb-3 flex flex-wrap gap-2">
+          <div className="mb-2 sm:mb-3 flex flex-wrap gap-2">
             {attachedFiles.map((file, index) => (
               <div key={index} className="relative group">
-                <div className="h-16 w-16 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
+                <div className="h-14 w-14 sm:h-16 sm:w-16 rounded-lg overflow-hidden bg-muted flex items-center justify-center">
                   {file.type.startsWith('image/') ? (
                     <img 
                       src={URL.createObjectURL(file)} 
@@ -393,7 +347,7 @@ export const ChatInput = ({
                 </div>
                 <button
                   onClick={() => removeFile(index)}
-                  className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full h-5 w-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full h-5 w-5 flex items-center justify-center text-xs opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                 >
                   ×
                 </button>
@@ -402,7 +356,7 @@ export const ChatInput = ({
           </div>
         )}
         
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3">
           <input
             ref={fileInputRef}
             type="file"
@@ -414,44 +368,31 @@ export const ChatInput = ({
           
           <Button
             onClick={() => fileInputRef.current?.click()}
-            disabled={isStreaming || isInCall || attachedFiles.length >= 10}
+            disabled={isStreaming || attachedFiles.length >= 10}
             size="icon"
             variant="secondary"
-            className="h-[60px] w-[60px] flex-shrink-0 shadow-soft"
+            className="h-12 w-12 sm:h-[60px] sm:w-[60px] flex-shrink-0 shadow-soft"
             title="Joindre des fichiers"
           >
-            <Paperclip className="h-5 w-5" />
+            <Paperclip className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
-
-          <Button
-            onClick={toggleRecording}
-            disabled={isStreaming || isInCall}
-            size="icon"
-            variant={isRecording ? "destructive" : "secondary"}
-            className="h-[60px] w-[60px] flex-shrink-0 shadow-soft"
-            title={isRecording ? "Arrêter l'enregistrement" : "Message vocal"}
-          >
-            {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-          </Button>
-
-          <VoiceCall onCallStateChange={setIsInCall} />
           
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Posez votre question..."
-            className="min-h-[60px] max-h-[200px] resize-none"
-            disabled={isStreaming || isInCall}
+            className="min-h-[48px] sm:min-h-[60px] max-h-[150px] sm:max-h-[200px] resize-none text-sm sm:text-base"
+            disabled={isStreaming}
           />
           
           <Button
             onClick={handleSend}
-            disabled={(!input.trim() && attachedFiles.length === 0) || isStreaming || isInCall}
+            disabled={(!input.trim() && attachedFiles.length === 0) || isStreaming}
             size="icon"
-            className="h-[60px] w-[60px] flex-shrink-0 shadow-soft"
+            className="h-12 w-12 sm:h-[60px] sm:w-[60px] flex-shrink-0 shadow-soft"
           >
-            <Send className="h-5 w-5" />
+            <Send className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
         </div>
       </div>
