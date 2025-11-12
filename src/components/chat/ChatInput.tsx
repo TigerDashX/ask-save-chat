@@ -116,23 +116,31 @@ export const ChatInput = ({
     );
 
     // Add user message to DB with images
+    const messageToInsert: any = {
+      conversation_id: conversationId,
+      role: "user" as const,
+      content: userMessage || "Voici mes fichiers",
+    };
+    
+    if (fileContents.length > 0) {
+      messageToInsert.images = fileContents;
+    }
+
     const { data: userMsgData, error: userMsgError } = await supabase
       .from("messages")
-      .insert({
-        conversation_id: conversationId,
-        role: "user" as const,
-        content: userMessage || "Voici mes fichiers",
-        images: fileContents.length > 0 ? fileContents : null,
-      })
+      .insert(messageToInsert)
       .select()
       .single();
 
     if (userMsgError) {
+      console.error("Error saving user message:", userMsgError);
       toast.error("Erreur lors de l'envoi du message");
       return;
     }
 
-    onMessagesUpdate([...messages, userMsgData as Message]);
+    // Update messages immediately so user sees their message
+    const updatedMessages = [...messages, userMsgData as Message];
+    onMessagesUpdate(updatedMessages);
     onStreamingChange(true);
 
     try {
@@ -153,10 +161,7 @@ export const ChatInput = ({
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({
-          messages: [...messages, { 
-            role: "user", 
-            content: messageContent
-          }].map(m => ({
+          messages: updatedMessages.map(m => ({
             role: m.role,
             content: m.content
           })),
@@ -202,7 +207,7 @@ export const ChatInput = ({
           return;
         }
 
-        onMessagesUpdate([...messages, userMsgData as Message, assistantMsgData as Message]);
+        onMessagesUpdate([...updatedMessages, assistantMsgData as Message]);
       } else {
         // Text streaming response
         const reader = response.body?.getReader();
@@ -240,8 +245,7 @@ export const ChatInput = ({
                 
                 // Update messages optimistically
                 onMessagesUpdate([
-                  ...messages,
-                  userMsgData as Message,
+                  ...updatedMessages,
                   {
                     id: "temp-" + Date.now(),
                     role: "assistant" as const,
@@ -275,7 +279,7 @@ export const ChatInput = ({
           return;
         }
 
-        onMessagesUpdate([...messages, userMsgData as Message, assistantMsgData as Message]);
+        onMessagesUpdate([...updatedMessages, assistantMsgData as Message]);
       }
       
       // Update conversation title if it's the first message
